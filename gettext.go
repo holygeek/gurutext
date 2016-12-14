@@ -99,14 +99,10 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 			}
 			arg = stringAdd(fset, x)
 		case *ast.SelectorExpr, *ast.Ident, *ast.CallExpr:
-			pos := fset.Position(x.Pos()).String()
-			warn("argument not a string literal (%T):", x)
-			showLine(pos)
+			showWarning(fset, x, "argument not a string literal (%T):", x)
 			return true
 		default:
-			pos := fset.Position(x.Pos()).String()
-			warn("%s: FIXME handle %T %#v", pos, x, x)
-			showLine(pos)
+			showWarning(fset, x, "FIXME handle %T %#v", x, x)
 			return true
 		}
 
@@ -140,6 +136,12 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		}
 	}
 	return calls
+}
+
+func showWarning(fset *token.FileSet, x ast.Expr, format string, args ...interface{}) {
+	pos := fset.Position(x.Pos()).String()
+	warn(format, args...)
+	showLine(pos)
 }
 
 func warn(str string, arg ...interface{}) {
