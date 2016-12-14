@@ -46,10 +46,10 @@ type Location struct {
 type ArgStatus int8
 
 const (
-	WANT_NONE ArgStatus = iota
-	WANT_PENDING
-	WANT_FOUND
-	WANT_NOTFOUND
+	ARG_NONE ArgStatus = iota
+	ARG_PENDING
+	ARG_FOUND
+	ARG_NOTFOUND
 )
 
 func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Location) []Call {
@@ -62,7 +62,7 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		if wantLocation[l.Line] == nil {
 			wantLocation[l.Line] = map[int]ArgStatus{}
 		}
-		wantLocation[l.Line][l.Column] = WANT_PENDING
+		wantLocation[l.Line][l.Column] = ARG_PENDING
 	}
 
 	var calls []Call
@@ -81,7 +81,7 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		if wantLocation[p.Line] == nil {
 			return true
 		}
-		if wantLocation[p.Line][p.Column] == WANT_NONE {
+		if wantLocation[p.Line][p.Column] == ARG_NONE {
 			return true
 		}
 		if len(call.Args) < 1 {
@@ -117,16 +117,16 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 				Column: p.Column,
 			},
 			Arg:    arg,
-			Status: WANT_FOUND,
+			Status: ARG_FOUND,
 		})
-		wantLocation[p.Line][p.Column] = WANT_FOUND
+		wantLocation[p.Line][p.Column] = ARG_FOUND
 		return true
 	})
 
 	for _, loc := range locations {
 		line := loc.Line
 		for column, state := range wantLocation[line] {
-			if state == WANT_PENDING {
+			if state == ARG_PENDING {
 				calls = append(calls, Call{
 					Filename: filename,
 					Location: Location{
@@ -134,7 +134,7 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 						Column: column,
 					},
 					Arg:    "",
-					Status: WANT_NOTFOUND,
+					Status: ARG_NOTFOUND,
 				})
 			}
 		}

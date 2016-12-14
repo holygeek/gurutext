@@ -39,11 +39,11 @@ func main() {
 			want: []Call{{
 				Location: Location{Line: 6, Column: 3},
 				Arg:      `"one"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 999, Column: 9999},
 				Arg:      ``,
-				Status:   WANT_NOTFOUND,
+				Status:   ARG_NOTFOUND,
 			}},
 		},
 	}
@@ -113,39 +113,39 @@ func main() {
 			want: []Call{{
 				Location: Location{Line: 6, Column: 3},
 				Arg:      `"one"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 7, Column: 3},
 				Arg:      `"two three"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 8, Column: 3},
 				Arg:      `"four five six"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 11, Column: 3},
 				Arg:      `"seven=eight"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 12, Column: 3},
 				Arg:      `"with\\nnewline"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 13, Column: 3},
 				Arg:      `"backtick"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 14, Column: 3},
 				Arg:      `"01 multi\n02 line\n03 backtick"`,
-				Status:   WANT_FOUND,
+				Status:   ARG_FOUND,
 			}, {
 				Location: Location{Line: 15, Column: 3},
 				Arg:      ``,
-				Status:   WANT_NOTFOUND,
+				Status:   ARG_NOTFOUND,
 			}, {
 				Location: Location{Line: 999, Column: 9999},
 				Arg:      ``,
-				Status:   WANT_NOTFOUND,
+				Status:   ARG_NOTFOUND,
 			}},
 		},
 	}

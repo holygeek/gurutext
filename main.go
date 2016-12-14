@@ -94,7 +94,7 @@ func gettext(position string) {
 
 	for _, calls := range gt.Calls {
 		for _, call := range calls {
-			if call.Status != WANT_FOUND {
+			if call.Status != ARG_FOUND {
 				continue
 			}
 			visit(call)
