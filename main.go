@@ -34,12 +34,12 @@ func main() {
 	flag.BoolVar(&optSort, "sort", false, "Sort messages alphabetically")
 	flag.Parse()
 
-	args := flag.Args()
-	if len(args) <= 1 {
+	offsets := flag.Args()
+	if len(offsets) <= 1 {
 		bail("usage: %s", usage)
 	}
 
-	gettext(args[0])
+	gettext(offsets)
 }
 
 type CallLocation struct {
@@ -48,13 +48,16 @@ type CallLocation struct {
 	Caller string
 }
 
-func gettext(position string) {
+func gettext(offsets []string) {
+	var callers []CallLocation
+	for _, position := range offsets {
+		callers = append(callers, runGuru(position)...)
+	}
+
 	var excludeRe *regexp.Regexp
 	if len(optExclude) > 0 {
 		excludeRe = regexp.MustCompile(optExclude)
 	}
-
-	callers := runGuru(position)
 
 	gt := NewGettext()
 	for _, c := range callers {
