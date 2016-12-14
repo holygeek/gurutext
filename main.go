@@ -35,35 +35,27 @@ func main() {
 	flag.Parse()
 
 	args := flag.Args()
-	if len(args) != 1 {
+	if len(args) <= 1 {
 		bail("usage: %s", usage)
 	}
 
 	gettext(args[0])
 }
 
+type CallLocation struct {
+	Pos    string
+	Desc   string
+	Caller string
+}
+
 func gettext(position string) {
-	args := []string{"-json"}
-	if optScope != "" {
-		args = append(args, "-scope", optScope)
-	}
-	args = append(args, "callers", position)
-
-	var callers []struct {
-		Pos    string
-		Desc   string
-		Caller string
-	}
-
 	var excludeRe *regexp.Regexp
 	if len(optExclude) > 0 {
 		excludeRe = regexp.MustCompile(optExclude)
 	}
 
-	err := json.Unmarshal(run("guru", args...), &callers)
-	if err != nil {
-		bail("%v", err)
-	}
+	callers := runGuru(position)
+
 	gt := NewGettext()
 	for _, c := range callers {
 		file, line, column := splitPos(c.Pos)
@@ -107,6 +99,22 @@ func gettext(position string) {
 			Print(calls)
 		}
 	}
+}
+
+func runGuru(offset string) []CallLocation {
+	args := []string{"-json"}
+	if optScope != "" {
+		args = append(args, "-scope", optScope)
+	}
+	args = append(args, "callers", offset)
+
+	var callers []CallLocation
+	err := json.Unmarshal(run("guru", args...), &callers)
+	if err != nil {
+		bail("%v", err)
+	}
+
+	return callers
 }
 
 func asInt(str string) int {
