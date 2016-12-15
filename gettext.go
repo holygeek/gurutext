@@ -82,14 +82,15 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 	}
 
 	var comments map[int]*ast.CommentGroup
+	comments = map[int]*ast.CommentGroup{}
+	for _, cg := range f.Comments {
+		p := fset.Position(cg.End())
+		comments[p.Line] = cg
+	}
+
 	var commentPrefix string
 	if optComment != "" {
 		commentPrefix = "// " + optComment
-		comments = map[int]*ast.CommentGroup{}
-		for _, cg := range f.Comments {
-			p := fset.Position(cg.End())
-			comments[p.Line] = cg
-		}
 	}
 
 	var calls []Call
@@ -117,6 +118,10 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 			return true
 		}
 
+		if comment := comments[p.Line-1]; comment != nil &&
+			len(optIgnore) > 0 && strings.Contains(comment.Text(), optIgnore) {
+			return true
+		}
 		var arg string
 		switch x := call.Args[0].(type) {
 		case *ast.BasicLit:
@@ -135,12 +140,16 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		}
 
 		var commentGroup *ast.CommentGroup
-		if comments != nil {
+		if len(commentPrefix) > 0 {
 			var comment ast.CommentGroup
 			cg := comments[p.Line-1]
 			if cg != nil {
 				doAppend := false
 				for _, c := range cg.List {
+					if len(optIgnore) > 0 && strings.Contains(c.Text, optIgnore) {
+						fmt.Fprintf(os.Stderr, "ignored (%s): %s\n", optIgnore, fset.Position(call.Args[0].Pos()))
+						return true
+					}
 					if strings.HasPrefix(c.Text, commentPrefix) {
 						doAppend = true
 					}

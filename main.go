@@ -21,6 +21,7 @@ var (
 	optExclude string
 	optSort    bool
 	optComment string
+	optIgnore  string = "GURUTEXT_IGNORE"
 
 	optTest bool
 
@@ -38,6 +39,7 @@ func main() {
 	flag.StringVar(&optExclude, "exclude", "", "Exclude files matching the given `regex`")
 	flag.BoolVar(&optSort, "sort", false, "Sort messages alphabetically")
 	flag.StringVar(&optComment, "comment", "", "Extract comments that starts with `keyword`")
+	flag.StringVar(&optIgnore, "ignore", optIgnore, "Ignore calls with preceeding comment that contains this text")
 	flag.Parse()
 
 	offsets := flag.Args()

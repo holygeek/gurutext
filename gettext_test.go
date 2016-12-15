@@ -352,6 +352,23 @@ func TestGettext(t *testing.T) {
 				"msgstr \"\"\n" +
 				"\n",
 		},
+		4: {
+			optComment: "I18N:",
+			input: "package main\n" +
+				"func main() {\n" +
+				"	// GURUTEXT_IGNORE\n" +
+				"	A(`hello`)\n" +
+				"	A(`world`)\n" +
+				"}",
+			locations: []Location{
+				Location{Line: 4, Column: 3},
+				Location{Line: 5, Column: 3},
+			},
+			want: "#: {FILENAME}:5:3\n" +
+				"msgid \"world\"\n" +
+				"msgstr \"\"\n" +
+				"\n",
+		},
 	}
 
 	stdout := &bytes.Buffer{}
