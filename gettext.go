@@ -35,7 +35,7 @@ func (g *Gettext) ExtractText() {
 		if lines != nil {
 			src = strings.Join(lines, "\n")
 		}
-		f, err := parser.ParseFile(fset, file, src, 0)
+		f, err := parser.ParseFile(fset, file, src, parser.ParseComments)
 		if err != nil {
 			bail("%s: %v", file, err)
 		}
@@ -81,6 +81,17 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		wantLocation[l.Line][l.Column] = ARG_PENDING
 	}
 
+	var comments map[int]*ast.CommentGroup
+	var commentPrefix string
+	if optComment != "" {
+		commentPrefix = "// " + optComment
+		comments = map[int]*ast.CommentGroup{}
+		for _, cg := range f.Comments {
+			p := fset.Position(cg.End())
+			comments[p.Line] = cg
+		}
+	}
+
 	var calls []Call
 	ast.Inspect(f, func(n ast.Node) bool {
 		if n == nil {
@@ -88,6 +99,7 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 		}
 
 		// fmt.Printf("Pos %s\n", fset.Position(n.Pos())) // DEBUG
+		//
 		// fmt.Printf("type: %#v\n", n) // DEBUG
 		call, ok := n.(*ast.CallExpr)
 		if !ok {
@@ -122,14 +134,35 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 			return true
 		}
 
+		var commentGroup *ast.CommentGroup
+		if comments != nil {
+			var comment ast.CommentGroup
+			cg := comments[p.Line-1]
+			if cg != nil {
+				doAppend := false
+				for _, c := range cg.List {
+					if strings.HasPrefix(c.Text, commentPrefix) {
+						doAppend = true
+					}
+					if doAppend {
+						comment.List = append(comment.List, c)
+					}
+				}
+				if len(comment.List) > 0 {
+					commentGroup = &comment
+				}
+			}
+		}
+
 		calls = append(calls, Call{
 			Filename: p.Filename,
 			Location: Location{
 				Line:   p.Line,
 				Column: p.Column,
 			},
-			Arg:    arg,
-			Status: ARG_FOUND,
+			Arg:     arg,
+			Status:  ARG_FOUND,
+			Comment: commentGroup,
 		})
 		wantLocation[p.Line][p.Column] = ARG_FOUND
 		return true

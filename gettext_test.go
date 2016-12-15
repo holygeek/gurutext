@@ -260,10 +260,11 @@ func (s String) Diff(o String) string {
 
 func TestGettext(t *testing.T) {
 	tests := []struct {
-		input     string
-		want      String
-		errors    String
-		locations []Location
+		input      string
+		want       String
+		errors     String
+		locations  []Location
+		optComment string
 	}{
 		0: {
 			input: "package main\n" +
@@ -284,6 +285,73 @@ func TestGettext(t *testing.T) {
 				"	A(foo)\n" +
 				"	  ^\n",
 		},
+		1: {
+			optComment: "I18N:",
+			input: "package main\n" +
+				"func main() {\n" +
+				"	//\n" +
+				"	// I18N: Comment\n" +
+				"	A(`hello`)\n" +
+				"}",
+			locations: []Location{
+				Location{Line: 5, Column: 3},
+			},
+			want: "#. I18N: Comment\n" +
+				"#: {FILENAME}:5:3\n" +
+				"msgid \"hello\"\n" +
+				"msgstr \"\"\n" +
+				"\n",
+		},
+		2: {
+			optComment: "I18N:",
+			input: "package main\n" +
+				"func main() {\n" +
+				"	//\n" +
+				"	// I18N: Multiline\n" +
+				"	//\n" +
+				"	// comment for\n" +
+				"	// translators\n" +
+				"	//\n" +
+				"	//\n" +
+				"	A(`hello`)\n" +
+				"}",
+			locations: []Location{
+				Location{Line: 10, Column: 3},
+			},
+			want: "#. I18N: Multiline\n" +
+				"#.\n" +
+				"#. comment for\n" +
+				"#. translators\n" +
+				"#: {FILENAME}:10:3\n" +
+				"msgid \"hello\"\n" +
+				"msgstr \"\"\n" +
+				"\n",
+		},
+		3: {
+			optComment: "I18N:",
+			input: "package main\n" +
+				"func main() {\n" +
+				"	//\n" +
+				"	// I18N: Multiline\n" +
+				"	//\n" +
+				"	//comment for\n" +
+				"	//translators\n" +
+				"	//\n" +
+				"	//\n" +
+				"	A(`hello`)\n" +
+				"}",
+			locations: []Location{
+				Location{Line: 10, Column: 3},
+			},
+			want: "#. I18N: Multiline\n" +
+				"#.\n" +
+				"#. comment for\n" +
+				"#. translators\n" +
+				"#: {FILENAME}:10:3\n" +
+				"msgid \"hello\"\n" +
+				"msgstr \"\"\n" +
+				"\n",
+		},
 	}
 
 	stdout := &bytes.Buffer{}
@@ -291,6 +359,7 @@ func TestGettext(t *testing.T) {
 	errOut = stderr
 
 	for i, tt := range tests {
+		optComment = tt.optComment
 		filename := fmt.Sprintf("test_%d.go", i)
 		tt.want = tt.want.Replace("{FILENAME}", filename, -1)
 		tt.errors = tt.errors.Replace("{FILENAME}", filename, -1)

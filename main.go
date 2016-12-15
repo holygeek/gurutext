@@ -20,6 +20,7 @@ var (
 	optScope   string
 	optExclude string
 	optSort    bool
+	optComment string
 
 	optTest bool
 
@@ -36,6 +37,7 @@ func main() {
 	flag.StringVar(&optScope, "scope", "", "Package `patterns` for guru's -scope argument")
 	flag.StringVar(&optExclude, "exclude", "", "Exclude files matching the given `regex`")
 	flag.BoolVar(&optSort, "sort", false, "Sort messages alphabetically")
+	flag.StringVar(&optComment, "comment", "", "Extract comments that starts with `keyword`")
 	flag.Parse()
 
 	offsets := flag.Args()
