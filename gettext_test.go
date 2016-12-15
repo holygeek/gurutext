@@ -224,11 +224,45 @@ func TestWarning(t *testing.T) {
 	}
 }
 
+type String string
+
+// OneLine helps diffing got vs want
+func (s String) OneLine() string {
+	return strings.Replace(string(s), "\n", "•", -1)
+}
+
+func (s String) Replace(pattern, replacement string, n int) String {
+	return String(strings.Replace(string(s), pattern, replacement, n))
+}
+
+func (s String) Diff(o String) string {
+	buf := &bytes.Buffer{}
+	so := s.OneLine()
+	oo := o.OneLine()
+	fmt.Fprintf(buf, "want: [%s]\n", so)
+	fmt.Fprintf(buf, " got: [%s]\n", oo)
+	fmt.Fprintf(buf, "       ")
+	a := []rune(so)
+	b := []rune(oo)
+	if len(b) < len(a) {
+		a, b = b, a
+	}
+	for i, ch := range a {
+		m := ' '
+		if b[i] != ch {
+			m = '^'
+		}
+		fmt.Fprintf(buf, "%c", m)
+	}
+	fmt.Fprintln(buf)
+	return buf.String()
+}
+
 func TestGettext(t *testing.T) {
 	tests := []struct {
 		input     string
-		want      string
-		errors    string
+		want      String
+		errors    String
 		locations []Location
 	}{
 		0: {
@@ -258,8 +292,8 @@ func TestGettext(t *testing.T) {
 
 	for i, tt := range tests {
 		filename := fmt.Sprintf("test_%d.go", i)
-		tt.want = strings.Replace(tt.want, "{FILENAME}", filename, -1)
-		tt.errors = strings.Replace(tt.errors, "{FILENAME}", filename, -1)
+		tt.want = tt.want.Replace("{FILENAME}", filename, -1)
+		tt.errors = tt.errors.Replace("{FILENAME}", filename, -1)
 		fileContent[filename] = strings.Split(tt.input, "\n")
 
 		gt := NewGettext()
@@ -270,22 +304,20 @@ func TestGettext(t *testing.T) {
 		stdout.Reset()
 		stderr.Reset()
 		gt.ExtractText()
-		errors := stderr.String()
+		errors := String(stderr.String())
 		if tt.errors != errors {
 			t.Errorf("tests[%d].errors failed\nwant: %s\n got: %s", i, tt.errors, errors)
+			t.Errorf("Diff:\n%s", tt.errors.Diff(errors))
 		}
 
 		gt.Each(func(call Call) {
 			fmt.Fprintf(stdout, "%s\n", call.AsGettext())
 		})
 
-		got := stdout.String()
+		got := String(stdout.String())
 		if tt.want != got {
 			t.Errorf("tests[%d] failed\nwant: %s\n got: %s", i, tt.want, got)
+			t.Errorf("Diff:\n%s", tt.want.Diff(got))
 		}
 	}
-}
-
-func asOneLine(s string) string {
-	return strings.Replace(s, "\n", "X", -1)
 }
