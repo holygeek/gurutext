@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -221,4 +222,70 @@ func TestWarning(t *testing.T) {
 			t.Errorf("tests[%d] failed\nwant: %s\n got: %s", i, tt.want, got)
 		}
 	}
+}
+
+func TestGettext(t *testing.T) {
+	tests := []struct {
+		input     string
+		want      string
+		errors    string
+		locations []Location
+	}{
+		0: {
+			input: "package main\n" +
+				"func main() {\n" +
+				"	A(`hello`)\n" +
+				"	A(foo)\n" +
+				"}",
+			locations: []Location{
+				Location{Line: 3, Column: 3},
+				Location{Line: 4, Column: 3},
+			},
+			want: "#: {FILENAME}:3:3\n" +
+				"msgid \"hello\"\n" +
+				"msgstr \"\"\n" +
+				"\n",
+			errors: "WARNING: argument not a string literal (*ast.Ident):\n" +
+				"{FILENAME}:4:4:\n" +
+				"	A(foo)\n" +
+				"	  ^\n",
+		},
+	}
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	errOut = stderr
+
+	for i, tt := range tests {
+		filename := fmt.Sprintf("test_%d.go", i)
+		tt.want = strings.Replace(tt.want, "{FILENAME}", filename, -1)
+		tt.errors = strings.Replace(tt.errors, "{FILENAME}", filename, -1)
+		fileContent[filename] = strings.Split(tt.input, "\n")
+
+		gt := NewGettext()
+		for _, l := range tt.locations {
+			gt.Add(filename, l.Line, l.Column)
+		}
+
+		stdout.Reset()
+		stderr.Reset()
+		gt.ExtractText()
+		errors := stderr.String()
+		if tt.errors != errors {
+			t.Errorf("tests[%d].errors failed\nwant: %s\n got: %s", i, tt.errors, errors)
+		}
+
+		gt.Each(func(call Call) {
+			fmt.Fprintf(stdout, "%s\n", call.AsGettext())
+		})
+
+		got := stdout.String()
+		if tt.want != got {
+			t.Errorf("tests[%d] failed\nwant: %s\n got: %s", i, tt.want, got)
+		}
+	}
+}
+
+func asOneLine(s string) string {
+	return strings.Replace(s, "\n", "X", -1)
 }

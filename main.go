@@ -90,15 +90,7 @@ func gettext(offsets []string) {
 	} else {
 		visit = Print
 	}
-
-	for _, calls := range gt.Calls {
-		for _, call := range calls {
-			if call.Status != ARG_FOUND {
-				continue
-			}
-			visit(call)
-		}
-	}
+	gt.Each(visit)
 
 	if len(sortedMessages) > 0 {
 		sort.Sort(sortedMessages)

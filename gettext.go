@@ -30,11 +30,27 @@ func (g *Gettext) Add(file string, line, column int) {
 func (g *Gettext) ExtractText() {
 	for file, locations := range g.Caller {
 		fset := token.NewFileSet()
-		f, err := parser.ParseFile(fset, file, nil, 0)
+		var src interface{}
+		lines := fileContent[file]
+		if lines != nil {
+			src = strings.Join(lines, "\n")
+		}
+		f, err := parser.ParseFile(fset, file, src, 0)
 		if err != nil {
 			bail("%s: %v", file, err)
 		}
 		g.Calls[file] = getArg(file, fset, f, locations)
+	}
+}
+
+func (g *Gettext) Each(visit func(Call)) {
+	for _, calls := range g.Calls {
+		for _, call := range calls {
+			if call.Status != ARG_FOUND {
+				continue
+			}
+			visit(call)
+		}
 	}
 }
 
