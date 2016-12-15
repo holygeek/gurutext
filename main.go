@@ -141,7 +141,7 @@ func bail(str string, arg ...interface{}) {
 func format(s string, arg ...interface{}) string {
 	str := fmt.Sprintf(s, arg...)
 	if len(str) > 0 && str[len(str)-1] == '\n' {
-		str = str[0 : len(str)-2]
+		str = str[0 : len(str)-1]
 	}
 	return str
 }
