@@ -85,7 +85,7 @@ func getArg(filename string, fset *token.FileSet, f *ast.File, locations []Locat
 			return true
 		}
 		if len(call.Args) < 1 {
-			fmt.Fprintf(os.Stderr, "no argument in function call at %s\n", p)
+			showWarning(fset, call, "no argument in function call")
 			return true
 		}
 
@@ -145,7 +145,7 @@ func showWarning(fset *token.FileSet, x ast.Expr, format string, args ...interfa
 }
 
 func warn(str string, arg ...interface{}) {
-	fmt.Fprintf(os.Stderr, "WARNING: %s\n", format(str, arg...))
+	fmt.Fprintf(errOut, "WARNING: %s\n", format(str, arg...))
 }
 
 func stringAdd(fset *token.FileSet, x *ast.BinaryExpr) string {
@@ -205,14 +205,14 @@ func showLine(pos string) {
 	}
 
 	line := lines[lnum-1]
-	fmt.Fprintf(os.Stderr, "%s:\n", pos)
-	fmt.Fprintf(os.Stderr, "%s:\n", line)
+	fmt.Fprintf(errOut, "%s:\n", pos)
+	fmt.Fprintf(errOut, "%s\n", line)
 	for _, c := range line[0 : column-1] {
 		m := ' '
 		if c == '\t' {
 			m = c
 		}
-		fmt.Fprintf(os.Stderr, "%c", m)
+		fmt.Fprintf(errOut, "%c", m)
 	}
-	fmt.Fprintln(os.Stderr, "^")
+	fmt.Fprintln(errOut, "^")
 }

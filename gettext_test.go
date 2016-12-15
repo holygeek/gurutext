@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -164,6 +167,58 @@ func main() {
 						i, k, filename, want, g)
 				}
 			}
+		}
+	}
+}
+
+func newFset(t *testing.T, filename, input string) (*token.FileSet, *ast.File) {
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, filename, input, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return fset, file
+}
+
+func TestWarning(t *testing.T) {
+	tests := []struct {
+		input string
+		want  string
+	}{
+		0: {input: "package main\nfunc main() {\n\tA()\n}",
+			want: "WARNING: no argument in function call\n" +
+				"test.go:3:2:\n" +
+				"	A()\n" +
+				"	^\n",
+		},
+		1: {input: "package main\nfunc main() {\n\tA(foo())\n}",
+			want: "WARNING: argument not a string literal (*ast.CallExpr):\n" +
+				"test.go:3:4:\n" +
+				"	A(foo())\n" +
+				"	  ^\n",
+		},
+	}
+	const (
+		Line   = 3
+		Column = 3
+	)
+
+	out := &bytes.Buffer{}
+	errOut = out
+
+	for i, tt := range tests {
+		filename := "test.go"
+		fileContent[filename] = strings.Split(tt.input, "\n")
+		locations := []Location{Location{Line: Line, Column: Column}}
+		fset, file := newFset(t, filename, tt.input)
+
+		out.Reset()
+		getArg("test.go", fset, file, locations)
+
+		got := out.String()
+		if tt.want != got {
+			t.Errorf("tests[%d] failed\nwant: %s\n got: %s", i, tt.want, got)
 		}
 	}
 }

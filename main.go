@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -21,9 +22,12 @@ var (
 	optSort    bool
 
 	optTest bool
+
+	errOut io.Writer
 )
 
 func main() {
+	errOut = os.Stderr
 	flag.CommandLine.SetOutput(os.Stdout)
 	flag.Usage = func() {
 		fmt.Printf("%s\nOptions:\n", usage)
@@ -138,7 +142,7 @@ func run(name string, arg ...string) []byte {
 }
 
 func bail(str string, arg ...interface{}) {
-	fmt.Fprintf(os.Stderr, "%s\n", format(str, arg...))
+	fmt.Fprintf(errOut, "%s\n", format(str, arg...))
 	os.Exit(1)
 }
 
